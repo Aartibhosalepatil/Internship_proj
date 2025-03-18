@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if task %}Edit Task{% else %}Add New Task{% endif %}</h2>
+    <form method="POST" id="task-form">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ task.id|default:'' }}">
+        <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input type="text" name="title" class="form-control" value="{{ task.title|default:'' }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control">{{ task.description|default:'' }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Assign To</label>
+            <select name="assigned_to" class="form-control">
+                {% for employee in employees %}
+                <option value="{{ employee.id }}" {% if task.assigned_to.id == employee.id %}selected{% endif %}>{{ employee.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Due Date</label>
+            <input type="date" name="due_date" class="form-control" value="{{ task.due_date|default:'' }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-control">
+                <option value="Pending" {% if task.status == "Pending" %}selected{% endif %}>Pending</option>
+                <option value="In Progress" {% if task.status == "In Progress" %}selected{% endif %}>In Progress</option>
+                <option value="Completed" {% if task.status == "Completed" %}selected{% endif %}>Completed</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-success">Save Task</button>
+        <a href="{% url 'tasks-page' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<script>
+    document.getElementById('task-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        let formData = new FormData(this);
+        fetch("{% url 'save-task' %}", {
+            method: 'POST',
+            body: formData
+        }).then(response => response.json()).then(data => {
+            if (data.status === 'success') {
+                window.location.href = "{% url 'tasks-page' %}";
+            }
+        });
+    });
+</script>
+{% endblock %}
